@@ -1,0 +1,7 @@
+If you're the type that has an Arduino board, you can probably figure this out. Just in case, here's the basic directions.
+
+- Hook up your board to an NES controller cable or directly to the NES motherboard. Please don't break working equipment to do this!
+- Load up the Arduino sketch in the ArduiNES folder and flash it to your board
+- Load up ArduiNESDriver in Processing and follow the on-screen directions.
+- Swear at me for not implimenting anything but keyboard support (yet)
+- Play around with it, have fun, and send me a pull request with your enhancements, if you've made any.
