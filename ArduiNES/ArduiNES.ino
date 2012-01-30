@@ -31,8 +31,8 @@ const byte BTN_DOWN   = 0x20;
 const byte BTN_LEFT   = 0x40;
 const byte BTN_RIGHT  = 0x80;
 
-int byteToSend;
-int nextByte;
+volatile int byteToSend;
+volatile int nextByte;
 
 void setup() 
 {
@@ -46,7 +46,7 @@ void setup()
   
   
   //Serial.begin(31250);  // MIDI control - if you are using a MIDI compliant external device via the DIN5
-  Serial.begin(115200);   // PC Control
+  Serial.begin(9600);   // Serial interrupts were messing with timing
   DDRB=0xFF;		      // Set all digital pins to outputs
   cli();     // Disable interrupts for a sec
   EICRA |= (1 << ISC01);
@@ -65,7 +65,7 @@ void loop()
 
 void serialEvent()
 {
-    nextByte=Serial.read() ^ 0xFF; 
+    nextByte=Serial.read() ^ 0xFFFF;  //using FFFF instead of FF because some software reads the data pin early and will act up otherwise (phantom A presses)
 }
 
 // Clock function

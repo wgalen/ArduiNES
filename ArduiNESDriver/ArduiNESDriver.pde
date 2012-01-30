@@ -60,7 +60,7 @@ void draw()
     case STATE_INIT: //Present port list.
       if (portIndex > -1)
       {
-        arduines = new Serial(this, portList[portIndex], 115200);
+        arduines = new Serial(this, portList[portIndex], 9600); 
         state = STATE_MAP;
       }
       if (portList.length==0)
