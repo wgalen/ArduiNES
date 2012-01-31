@@ -32,10 +32,12 @@ final char BTN_RIGHT   = 0x80;
 
 int buttonStats = 0;
 int buttonMap[] = new int[8];
+int extButtonMap[] = new int[8];
 
 int buttonIndex = 0; //Used only during keymapping. There's probably a cleaner way.
 
 int lastKey;
+int extLastKey;
 int state = STATE_INIT;
 
 int portIndex = -1;
@@ -182,38 +184,40 @@ void keyPressed()
       break;
     case STATE_MAP:
       buttonMap[buttonIndex] = key;
+      extButtonMap[buttonIndex] = keyCode;
       buttonStats=0;
       break;
     case STATE_RUN:
-      if (key==lastKey)  //I shouldn't need this, but in processing, you get
-        break;           //multiple calls to keyPressed when typematic kicks in.
+      if ((key==lastKey) && (keyCode==extLastKey))  //I shouldn't need this, but in processing, you get
+        break;                                      //multiple calls to keyPressed when typematic kicks in.
         
-      if (key==buttonMap[0]){
+      if ((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
         buttonStats |= BTN_A;
       }
-      if (key==buttonMap[1]){
+      if ((key==buttonMap[1]) && (keyCode==extButtonMap[1])){
         buttonStats |= BTN_B;
       }
-      if (key==buttonMap[2]){
+      if ((key==buttonMap[2]) && (keyCode==extButtonMap[2])){
         buttonStats |= BTN_SELECT;
       }
-      if (key==buttonMap[3]){
+      if ((key==buttonMap[3]) && (keyCode==extButtonMap[3])){
         buttonStats |= BTN_START;
       }
-      if (key==buttonMap[4]){
+      if ((key==buttonMap[4]) && (keyCode==extButtonMap[4])){
         buttonStats |= BTN_UP;
       }
-      if (key==buttonMap[5]){
+      if ((key==buttonMap[5]) && (keyCode==extButtonMap[5])){
         buttonStats |= BTN_DOWN;
       }
-      if (key==buttonMap[6]){
+      if ((key==buttonMap[6]) && (keyCode==extButtonMap[6])){
         buttonStats |= BTN_LEFT;
       }
-      if (key==buttonMap[7]){
+      if ((key==buttonMap[7]) && (keyCode==extButtonMap[7])){
         buttonStats |= BTN_RIGHT;
       }
       arduines.write(buttonStats);
       lastKey=key;
+      extLastKey=keyCode;
   }
 }
 
@@ -224,28 +228,29 @@ void keyReleased()
     return;
   }
   lastKey=0;
-  if (key==buttonMap[0]){
+  extLastKey=0;
+  if (((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
     buttonStats &= ~(BTN_A);
   }
-  if (key==buttonMap[1]){
+  if ((key==buttonMap[1]) && (keyCode==extButtonMap[1])){
     buttonStats &= ~(BTN_B);
   }
-  if (key==buttonMap[2]){
+  if ((key==buttonMap[2]) && (keyCode==extButtonMap[2])){
     buttonStats &= ~(BTN_SELECT);
   }
-  if (key==buttonMap[3]){
+  if ((key==buttonMap[3]) && (keyCode==extButtonMap[3])){
     buttonStats &= ~(BTN_START);
   }
-  if (key==buttonMap[4]){
+  if ((key==buttonMap[4]) && (keyCode==extButtonMap[4])){
     buttonStats &= ~(BTN_UP);
   }
-  if (key==buttonMap[5]){
+  if ((key==buttonMap[5]) && (keyCode==extButtonMap[5])){
     buttonStats &= ~(BTN_DOWN);
   }
-  if (key==buttonMap[6]){
+  if ((key==buttonMap[6]) && (keyCode==extButtonMap[6])){
     buttonStats &= ~(BTN_LEFT);
   }
-  if (key==buttonMap[7]){
+  if ((key==buttonMap[7]) && (keyCode==extButtonMap[7])){
     buttonStats &= ~(BTN_RIGHT);
   }  
   arduines.write(buttonStats);
