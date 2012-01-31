@@ -229,7 +229,7 @@ void keyReleased()
   }
   lastKey=0;
   extLastKey=0;
-  if (((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
+  if ((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
     buttonStats &= ~(BTN_A);
   }
   if ((key==buttonMap[1]) && (keyCode==extButtonMap[1])){
