@@ -45,6 +45,7 @@ String[] deviceList;
 
 ControllDevice device;
 ControllIO controll;
+ControllStick stick;
 
 import procontroll.*;
 import processing.serial.*;
@@ -95,6 +96,10 @@ void draw()
       {
         device=controll.getDevice(deviceIndex);
         device.open();
+        if (device.getNumberOfSticks() > 0)
+        {
+          stick=device.getStick(0);
+        }
         state = STATE_MAP;
         lastKey=-1;
         delay(500); //ugly hack so we don't read out keys to early if the keyboard is active in procontroll
@@ -133,6 +138,11 @@ void draw()
           text("Press a key for the Start button.", 10,10);
           break;
         case 4:
+          if (device.getNumberOfSticks() > 0)
+          {
+            buttonIndex=8;    //Skip keymapping for joystick devices
+            break;
+          }
           text("Press a key for the Up button.", 10,10);
           break;
         case 5:
@@ -204,6 +214,7 @@ void draw()
           }
         }
       }
+      
       break;
     case STATE_RUN:
       text("Button stats:",10,10);
@@ -230,6 +241,57 @@ void draw()
       }
       if ((buttonStats & BTN_RIGHT) >0){
         text("Right",180,20);
+      }
+      if (device.getNumberOfSticks() > 0)
+      {
+        if (stick.getY() < -0.5)
+        {
+          buttonStats |= BTN_LEFT;
+          buttonStats |= BTN_RIGHT;
+          buttonStats &= ~(BTN_LEFT);
+          buttonStats &= ~(BTN_RIGHT);
+          pressLeft();
+        }
+        if (stick.getY() > 0.5)
+        {
+          buttonStats |= BTN_LEFT;
+          buttonStats |= BTN_RIGHT;
+          buttonStats &= ~(BTN_LEFT);
+          buttonStats &= ~(BTN_RIGHT);
+          pressRight();
+        }
+        if ((stick.getY() > -0.5) && (stick.getY() < 0.5))
+        {
+          buttonStats |= BTN_LEFT;
+          buttonStats |= BTN_RIGHT;
+          buttonStats &= ~(BTN_LEFT);
+          buttonStats &= ~(BTN_RIGHT);
+          arduines.write(buttonStats);
+        }
+        if (stick.getX() < -0.5)
+        {
+          buttonStats |= BTN_UP;
+          buttonStats |= BTN_DOWN;
+          buttonStats &= ~(BTN_UP);
+          buttonStats &= ~(BTN_DOWN);
+          pressUp();
+        }
+        if (stick.getX() > 0.5)
+        {
+          buttonStats |= BTN_UP;
+          buttonStats |= BTN_DOWN;
+          buttonStats &= ~(BTN_UP);
+          buttonStats &= ~(BTN_DOWN);
+          pressDown();
+        }
+        if ((stick.getX() > -0.5) && (stick.getX() < 0.5))
+        {
+          buttonStats |= BTN_UP;
+          buttonStats |= BTN_DOWN;
+          buttonStats &= ~(BTN_UP);
+          buttonStats &= ~(BTN_DOWN);
+          arduines.write(buttonStats);
+        }
       }
       break;
   }
