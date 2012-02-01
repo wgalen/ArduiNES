@@ -18,8 +18,9 @@
 
 // State machine constants
 final int STATE_INIT   = 0;
-final int STATE_MAP    = 1;
-final int STATE_RUN    = 2;
+final int STATE_DEVICE = 1;
+final int STATE_MAP    = 2;
+final int STATE_RUN    = 3;
 // NES button constants
 final char BTN_A       = 0x01;
 final char BTN_B       = 0x02;
@@ -31,18 +32,21 @@ final char BTN_LEFT    = 0x40;
 final char BTN_RIGHT   = 0x80;
 
 int buttonStats = 0;
-int buttonMap[] = new int[8];
-int extButtonMap[] = new int[8];
-
 int buttonIndex = 0; //Used only during keymapping. There's probably a cleaner way.
 
 int lastKey;
-int extLastKey;
 int state = STATE_INIT;
 
 int portIndex = -1;
 String[] portList;
 
+int deviceIndex = -1;
+String[] deviceList;
+
+ControllDevice device;
+ControllIO controll;
+
+import procontroll.*;
 import processing.serial.*;
 
 Serial arduines;
@@ -50,6 +54,14 @@ Serial arduines;
 void setup()
 {
   portList = Serial.list();
+  controll=ControllIO.getInstance(this);
+  deviceList = new String[controll.getNumberOfDevices()];
+  for (int i=0;i<deviceList.length;i++)
+  {
+    device=controll.getDevice(i);
+    deviceList[i]=device.getName();
+    device.close();
+  }
   size(640,480);
 }
 
@@ -63,7 +75,8 @@ void draw()
       if (portIndex > -1)
       {
         arduines = new Serial(this, portList[portIndex], 9600); 
-        state = STATE_MAP;
+        state = STATE_DEVICE;
+        break;
       }
       if (portList.length==0)
       {
@@ -77,21 +90,28 @@ void draw()
       }
       break;
       
+    case STATE_DEVICE: //Present device list.
+      if (deviceIndex > -1)
+      {
+        device=controll.getDevice(deviceIndex);
+        device.open();
+        state = STATE_MAP;
+        lastKey=-1;
+        delay(500); //ugly hack so we don't read out keys to early if the keyboard is active in procontroll
+      }
+      if (deviceList.length==0)
+      {
+        text("No input devices available. Something is massively broken.", 10,10);
+      }
+      
+      for (int i = 0; i < deviceList.length; i++)
+      {
+        text(i + ".",10,(i+1)*10);
+        text(deviceList[i],20,(i+1)*10);
+      }
+      break;
+      
     case STATE_MAP: //Iterate through buttonMap and set keycodes accordingly.
-      for(buttonIndex = 0; buttonIndex < 8; buttonIndex++)
-      {
-        if (buttonMap[buttonIndex] == 0)
-          break;
-      }
-      //Check to see if we have mapped all the buttons
-      if (buttonIndex==7)
-      {
-        if (buttonMap[7]!=0)
-        {
-          buttonIndex=8;
-        }
-      }
-      //if buttonIndex==8 here, then every key has been mapped.
       if (buttonIndex==8)
       {
         state=STATE_RUN;
@@ -125,6 +145,65 @@ void draw()
           text("Press a key for the Right button.", 10,10);
           break;
       }
+      for (int i = 0;i < device.getNumberOfButtons();i++)
+      {
+        if(device.getButton(i).pressed())
+        {
+          if (i==lastKey)
+            return;
+          switch(buttonIndex)
+          {
+            case 0:
+              device.plug("pressA",ControllIO.ON_PRESS,i);
+              device.plug("releaseA",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 1:
+              device.plug("pressB",ControllIO.ON_PRESS,i);
+              device.plug("releaseB",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 2:
+              device.plug("pressSelect",ControllIO.ON_PRESS,i);
+              device.plug("releaseSelect",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 3:
+              device.plug("pressStart",ControllIO.ON_PRESS,i);
+              device.plug("releaseStart",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 4:
+              device.plug("pressUp",ControllIO.ON_PRESS,i);
+              device.plug("releaseUp",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 5:
+              device.plug("pressDown",ControllIO.ON_PRESS,i);
+              device.plug("releaseDown",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 6:
+              device.plug("pressLeft",ControllIO.ON_PRESS,i);
+              device.plug("releaseLeft",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+            case 7:
+              device.plug("pressRight",ControllIO.ON_PRESS,i);
+              device.plug("releaseRight",ControllIO.ON_RELEASE,i);
+              lastKey=i;
+              buttonIndex++;
+              break;
+          }
+        }
+      }
       break;
     case STATE_RUN:
       text("Button stats:",10,10);
@@ -155,7 +234,6 @@ void draw()
       break;
   }
 }
-
 void keyPressed()
 {
   switch(state)
@@ -182,76 +260,108 @@ void keyPressed()
       if ((key=='9')&&(portList.length > 9))
         portIndex=9;
       break;
-    case STATE_MAP:
-      buttonMap[buttonIndex] = key;
-      extButtonMap[buttonIndex] = keyCode;
-      buttonStats=0;
+    
+    case STATE_DEVICE:
+      if ((key=='0')&&(deviceList.length > 0))
+        deviceIndex=0;
+      if ((key=='1')&&(deviceList.length > 1))
+        deviceIndex=1;
+      if ((key=='2')&&(deviceList.length > 2))
+        deviceIndex=2;
+      if ((key=='3')&&(deviceList.length > 3))
+        deviceIndex=3;
+      if ((key=='4')&&(deviceList.length > 4))
+        deviceIndex=4;
+      if ((key=='5')&&(deviceList.length > 5))
+        deviceIndex=5;
+      if ((key=='6')&&(deviceList.length > 6))
+        deviceIndex=6;
+      if ((key=='7')&&(deviceList.length > 7))
+        deviceIndex=7;
+      if ((key=='8')&&(deviceList.length > 8))
+        deviceIndex=8;
+      if ((key=='9')&&(deviceList.length > 9))
+        deviceIndex=9;
       break;
-    case STATE_RUN:
-      if ((key==lastKey) && (keyCode==extLastKey))  //I shouldn't need this, but in processing, you get
-        break;                                      //multiple calls to keyPressed when typematic kicks in.
-        
-      if ((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
-        buttonStats |= BTN_A;
-      }
-      if ((key==buttonMap[1]) && (keyCode==extButtonMap[1])){
-        buttonStats |= BTN_B;
-      }
-      if ((key==buttonMap[2]) && (keyCode==extButtonMap[2])){
-        buttonStats |= BTN_SELECT;
-      }
-      if ((key==buttonMap[3]) && (keyCode==extButtonMap[3])){
-        buttonStats |= BTN_START;
-      }
-      if ((key==buttonMap[4]) && (keyCode==extButtonMap[4])){
-        buttonStats |= BTN_UP;
-      }
-      if ((key==buttonMap[5]) && (keyCode==extButtonMap[5])){
-        buttonStats |= BTN_DOWN;
-      }
-      if ((key==buttonMap[6]) && (keyCode==extButtonMap[6])){
-        buttonStats |= BTN_LEFT;
-      }
-      if ((key==buttonMap[7]) && (keyCode==extButtonMap[7])){
-        buttonStats |= BTN_RIGHT;
-      }
-      arduines.write(buttonStats);
-      lastKey=key;
-      extLastKey=keyCode;
   }
 }
-
-void keyReleased()
+void pressA()
 {
-  if (state!=STATE_RUN) //nothing to do with key releases unless everything is set up
-  {
-    return;
-  }
-  lastKey=0;
-  extLastKey=0;
-  if ((key==buttonMap[0]) && (keyCode==extButtonMap[0])){
-    buttonStats &= ~(BTN_A);
-  }
-  if ((key==buttonMap[1]) && (keyCode==extButtonMap[1])){
-    buttonStats &= ~(BTN_B);
-  }
-  if ((key==buttonMap[2]) && (keyCode==extButtonMap[2])){
-    buttonStats &= ~(BTN_SELECT);
-  }
-  if ((key==buttonMap[3]) && (keyCode==extButtonMap[3])){
-    buttonStats &= ~(BTN_START);
-  }
-  if ((key==buttonMap[4]) && (keyCode==extButtonMap[4])){
-    buttonStats &= ~(BTN_UP);
-  }
-  if ((key==buttonMap[5]) && (keyCode==extButtonMap[5])){
-    buttonStats &= ~(BTN_DOWN);
-  }
-  if ((key==buttonMap[6]) && (keyCode==extButtonMap[6])){
-    buttonStats &= ~(BTN_LEFT);
-  }
-  if ((key==buttonMap[7]) && (keyCode==extButtonMap[7])){
-    buttonStats &= ~(BTN_RIGHT);
-  }  
+  buttonStats |= BTN_A;
+  arduines.write(buttonStats);
+}
+void pressB()
+{
+  buttonStats |= BTN_B;
+  arduines.write(buttonStats);
+}
+void pressSelect()
+{
+  buttonStats |= BTN_SELECT;
+  arduines.write(buttonStats);
+}
+void pressStart()
+{
+  buttonStats |= BTN_START;
+  arduines.write(buttonStats);
+}
+void pressUp()
+{
+  buttonStats |= BTN_UP;
+  arduines.write(buttonStats);
+}
+void pressDown()
+{
+  buttonStats |= BTN_DOWN;
+  arduines.write(buttonStats);
+}
+void pressLeft()
+{
+  buttonStats |= BTN_LEFT;
+  arduines.write(buttonStats);
+}
+void pressRight()
+{
+  buttonStats |= BTN_RIGHT;
+  arduines.write(buttonStats);
+}
+void releaseA()
+{
+  buttonStats &= ~(BTN_A);
+  arduines.write(buttonStats);
+}
+void releaseB()
+{
+  buttonStats &= ~(BTN_B);
+  arduines.write(buttonStats);
+}
+void releaseSelect()
+{
+  buttonStats &= ~(BTN_SELECT);
+  arduines.write(buttonStats);
+}
+void releaseStart()
+{
+  buttonStats &= ~(BTN_START);
+  arduines.write(buttonStats);
+}
+void releaseUp()
+{
+  buttonStats &= ~(BTN_UP);
+  arduines.write(buttonStats);
+}
+void releaseDown()
+{
+  buttonStats &= ~(BTN_DOWN);
+  arduines.write(buttonStats);
+}
+void releaseLeft()
+{
+  buttonStats &= ~(BTN_LEFT);
+  arduines.write(buttonStats);
+}
+void releaseRight()
+{
+  buttonStats &= ~(BTN_RIGHT);
   arduines.write(buttonStats);
 }
